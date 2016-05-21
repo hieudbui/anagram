@@ -2,21 +2,22 @@ package com.ibotta.anagram
 
 import grails.converters.JSON
 
+/**
+ * this controller deals with words related actions
+ */
 class WordsController {
 	DictionaryStoreService dictionaryStoreService
 
-	def stats() {
-		render dictionaryStoreService.stats() as JSON
-	}
-
-	def reload() {
-		dictionaryStoreService.load()
-		render "reload successful"
-	}
-
+	/**
+	 * HATEOAS perhaps?
+	 */
 	def add() {
 		dictionaryStoreService.add(request.JSON.words)
-		response.status = 201
+		withFormat {
+			json {
+				response.status = 201
+			}
+		}
 	}
 
 	def deleteAll() {
@@ -35,6 +36,16 @@ class WordsController {
 				response.status = 200
 			}
 		}
+	}
+
+	def stats() {
+		render dictionaryStoreService.stats() as JSON
+	}
+
+	//json response?
+	def reload() {
+		dictionaryStoreService.reload()
+		render "reload successful"
 	}
 }
 

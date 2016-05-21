@@ -2,19 +2,25 @@ package com.ibotta.anagram
 
 import grails.converters.JSON
 
+/**
+ * this controller deals with anagrams related actions
+ */
 class AnagramsController {
 	DictionaryStoreService dictionaryStoreService
 
+	/**
+	 * HATEOAS perhaps?
+	 */
 	def search(String word, Integer limit, Boolean properNoun) {
 		def words = dictionaryStoreService.search(word, limit ?: Integer.MAX_VALUE, properNoun ?: false)
 		withFormat {
 			json {
-				response.status = 200
 				render([anagrams: words] as JSON)
 			}
 		}
 	}
 
+	//json response?
 	def match() {
 		def words = request.JSON.words as Set
 		render(dictionaryStoreService.allAnagrams(words))

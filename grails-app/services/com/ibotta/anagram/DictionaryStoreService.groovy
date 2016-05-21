@@ -2,24 +2,33 @@ package com.ibotta.anagram
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.Resource
 
 import javax.annotation.PostConstruct
 import java.util.concurrent.ConcurrentHashMap
 
 class DictionaryStoreService {
-
-	static Logger logger = LoggerFactory.getLogger(DictionaryStoreService.class)
-
-	private Map<String, Set<String>> anagrams = new ConcurrentHashMap()
+	private static Logger logger = LoggerFactory.getLogger(DictionaryStoreService.class)
+	//this can be injected if needed
+	private Resource source = new FileSystemResource('dictionary.txt')
+	private final Map<String, Set<String>> anagrams = new ConcurrentHashMap()
 	private def calculator = new AnagramCalculator()
 
+	//the initial bean instantiatiation will take the load hit
+	//need to profile the memory
 	@PostConstruct
 	def load() {
 		def start = System.currentTimeMillis()
-		def lines = new File('dictionary.txt').readLines()
+		def lines = new InputStreamReader(source.getInputStream()).readLines()
 		anagrams << calculator.calculate(lines, AnagramCalculator.Method.PRIME)
 		def end = System.currentTimeMillis()
 		logger.debug("loading and indexing took ${end - start} ms");
+	}
+
+	def reload() {
+		deleteAll()
+		load()
 	}
 
 	void add(Collection<String> words) {
@@ -31,14 +40,15 @@ class DictionaryStoreService {
 		}
 	}
 
-	//no guarantee on order yet
 	List<String> search(String word, Integer limit, Boolean properNoun) {
 		def key = calculator.calculate(word, AnagramCalculator.Method.PRIME)
 		List<String> value = ((anagrams[key] ?: []) - word) as List
 		if (properNoun) {
 			value = value.findAll { Character.isUpperCase(it.charAt(0)) }
 		}
-		value[(0..<(limit > value.size() ? value.size() : limit))]
+		//sort by name since we're returning a list
+		//even though its not a requirement, sorting makes it easier to diagnose issues
+		value.sort()[(0..<(limit > value.size() ? value.size() : limit))]
 	}
 
 	void deleteAll() {
@@ -64,6 +74,8 @@ class DictionaryStoreService {
 		stats.min = allWords.min { it.length() }?.length() ?: 0
 		stats.max = allWords.max { it.length() }?.length() ?: 0
 		stats.average = (allWords.sum { it.length() } ?: 0) / (stats.count ?: 1)
+		def sortedLengths = allWords.collect { it.length() }.sort()
+		stats.median = sortedLengths[sortedLengths.size() / 2 as int] ?: 0
 		stats
 	}
 
