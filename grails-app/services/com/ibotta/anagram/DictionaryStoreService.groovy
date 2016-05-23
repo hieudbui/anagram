@@ -15,15 +15,18 @@ class DictionaryStoreService {
 	private final Map<String, Set<String>> anagrams = new ConcurrentHashMap()
 	private def calculator = new AnagramCalculator()
 
-	//the initial bean instantiatiation will take the load hit
+	//the initial bean instantiation will take the load hit
 	//need to profile the memory
+	//preprocessing the file could help minimize memory thrashing
 	@PostConstruct
 	def load() {
 		def start = System.currentTimeMillis()
 		def lines = new InputStreamReader(source.getInputStream()).readLines()
-		anagrams << calculator.calculate(lines, AnagramCalculator.Method.PRIME)
 		def end = System.currentTimeMillis()
-		logger.debug("loading and indexing took ${end - start} ms");
+		logger.debug("loading took ${end - start} ms");
+		anagrams << calculator.calculate(lines, AnagramCalculator.Method.PRIME)
+		end = System.currentTimeMillis()
+		logger.debug("indexing took ${end - start} ms");
 	}
 
 	def reload() {
@@ -66,8 +69,11 @@ class DictionaryStoreService {
 
 	}
 
-	//should cache this and expires the stats on stores modification
+	//should cache this and expires the stats on store modification
+	//currently taking 300ms to calculate stats
+	//time log this would be useful in deciding how to improve the perf
 	Map stats() {
+		def start = System.currentTimeMillis()
 		def stats = [:]
 		stats.count = anagrams.values().inject(0) { result, entry -> result + entry.size() } ?: 0
 		def allWords = anagrams.values().flatten()
@@ -76,6 +82,8 @@ class DictionaryStoreService {
 		stats.average = (allWords.sum { it.length() } ?: 0) / (stats.count ?: 1)
 		def sortedLengths = allWords.collect { it.length() }.sort()
 		stats.median = sortedLengths[sortedLengths.size() / 2 as int] ?: 0
+		def end = System.currentTimeMillis()
+		logger.debug("calculating stats took ${end - start} ms")
 		stats
 	}
 

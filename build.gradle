@@ -71,3 +71,11 @@ assets {
 	minifyJs = true
 	minifyCss = true
 }
+
+
+test {
+	reports {
+		junitXml.enabled = false
+		html.enabled = true
+	}
+}

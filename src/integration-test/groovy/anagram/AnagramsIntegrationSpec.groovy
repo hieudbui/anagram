@@ -10,7 +10,7 @@ import spock.lang.Specification
 //which is nice for rolling back, transactionality
 //at the cost of startup time
 @Integration
-class AnagramsSpec extends Specification {
+class AnagramsIntegrationSpec extends Specification {
 	def serverUrl = "http://localhost:8080"
 	def anagramsEndpoint = "$serverUrl/anagrams"
 

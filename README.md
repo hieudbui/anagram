@@ -31,15 +31,29 @@ Added the following endpoints
 
 ## Tests
 
-- Add some unit tests (src/test)
-- Add a couple end-end tests (src/integration-test)
+- Unit tests are in src/test
+- End-end tests  arein src/integration-test
 - ./gradlew test integrationTest to run unit and integration test
 
 ## API Client
 
-- I use postman to test the APIs
-- Open up Anagram.postman_collection
+- I use postman to test the APIs.  Open up Anagram.postman_collection
 
 ## Documentation
 
 Need to look into the various REST documentation solution (RAML, Spring REST)
+
+## Known issues
+- First request of dictionary cause the dictionary load (1000ms+)  
+- Anagrams calculation could result in arithmetic overflow
+- Performance issue in calculating store stats (300ms+)
+- Performance issue on load (900ms+)
+
+## Things to do
+- Load the data in a separate thread on startup, which will eliminate the *hang* impression on the initial request of the dictionary store.
+- More integration tests
+- Profile memory usage
+- Consider decomposing DictionaryStoreService
+- Some of the endpoints do not honor content type request
+- Cache stats
+- Consider using map/reduce to load the dictionary file (split the file, process in parallel, merge into a map)
